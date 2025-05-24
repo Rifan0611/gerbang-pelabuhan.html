@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aplikasi Gerbang Otomatis Pelabuhan</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f1f5f9;
+        margin: 0;
+        padding: 20px;
+      }
+      .container {
+        max-width: 800px;
+        background: #fff;
+        margin: auto;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      }
+      h1,
+      h2,
+      h3 {
+        text-align: center;
+        color: #1e293b;
+      }
+      label {
+        display: block;
+        margin-top: 15px;
+        font-weight: bold;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+      }
+      button {
+        background-color: #0f172a;
+        color: white;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        width: 100%;
+        margin-top: 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1e293b;
+      }
+      .result,
+      .data-list {
+        margin-top: 20px;
+        padding: 15px;
+        background: #e2e8f0;
+        border-radius: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        text-align: center;
+      }
+      th {
+        background-color: #e2e8f0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="loginContainer">
+      <h1>Login Petugas</h1>
+      <label for="username">Username</label>
+      <input type="text" id="username" placeholder="Masukkan Username" />
+      <label for="password">Password</label>
+      <input type="password" id="password" placeholder="Masukkan Password" />
+      <button onclick="login()">Login</button>
+      <div class="result" id="loginMessage"></div>
+    </div>
+
+    <div class="container" id="mainContainer" style="display: none">
+      <h1>Sistem Gerbang Otomatis Pelabuhan</h1>
+      <label for="plat">Nomor Plat Kendaraan</label>
+      <input type="text" id="plat" placeholder="Contoh: B 1234 CD" />
+      <label for="rfid">ID RFID</label>
+      <input type="text" id="rfid" placeholder="Masukkan ID RFID" />
+      <label for="berat">Berat Kendaraan (ton)</label>
+      <input type="number" id="berat" step="0.1" />
+      <button onclick="prosesData()">Proses Masuk</button>
+      <div class="result" id="hasil"></div>
+      <h2>Data Manual</h2>
+      <label for="manual">Masukkan Data Manual (Format: plat,rfid,berat)</label>
+      <textarea
+        id="manual"
+        rows="5"
+        placeholder="Contoh:
+B 1234 CD,A123456789,6.2
+L 9876 UI,A009876543,10.0"
+      ></textarea>
+      <button onclick="loadManualData()">Muat Data Manual</button>
+      <div class="data-list" id="dataList">
+        <h3>Daftar Data Kendaraan</h3>
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Plat</th>
+              <th>ID RFID</th>
+              <th>Berat</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      let nomor = 1;
+
+      function login() {
+        const user = document.getElementById("username").value.trim();
+        const pass = document.getElementById("password").value.trim();
+        const msg = document.getElementById("loginMessage");
+
+        const akun = { username: "admin123", password: "gerbang2025" };
+
+        if (user === akun.username && pass === akun.password) {
+          document.getElementById("loginContainer").style.display = "none";
+          document.getElementById("mainContainer").style.display = "block";
+        } else {
+          msg.innerHTML =
+            "<strong>Login gagal! Username atau password salah.</strong>";
+        }
+      }
+
+      function prosesData() {
+        const plat = document.getElementById("plat").value.trim();
+        const rfid = document.getElementById("rfid").value.trim();
+        const berat = parseFloat(document.getElementById("berat").value);
+        const hasil = document.getElementById("hasil");
+
+        if (!plat || !rfid || isNaN(berat)) {
+          hasil.style.display = "block";
+          hasil.innerHTML = "<strong>Semua data harus diisi!</strong>";
+          return;
+        }
+
+        const validRFID = /^A\d{5,}$/.test(rfid);
+        const validPlat = /^[A-Z]{1,2} \d{1,4} [A-Z]{1,3}$/.test(plat);
+        const status = validRFID && validPlat ? "✅ Diizinkan" : "❌ Ditolak";
+
+        hasil.style.display = "block";
+        hasil.innerHTML = `Status: ${status}<br>Plat: ${plat}<br>RFID: ${rfid}<br>Berat: ${berat} ton`;
+
+        tambahKeTabel(plat, rfid, berat, status);
+
+        document.getElementById("plat").value = "";
+        document.getElementById("rfid").value = "";
+        document.getElementById("berat").value = "";
+      }
+
+      function tambahKeTabel(plat, rfid, berat, status) {
+        const tbody = document
+          .getElementById("dataTable")
+          .querySelector("tbody");
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${nomor++}</td><td>${plat}</td><td>${rfid}</td><td>${berat}</td><td>${status}</td>`;
+        tbody.appendChild(row);
+      }
+
+      function loadManualData() {
+        const input = document.getElementById("manual").value.trim();
+        const rows = input.split("\n");
+        for (let line of rows) {
+          const parts = line.split(",");
+          if (parts.length === 3) {
+            const plat = parts[0].trim();
+            const rfid = parts[1].trim();
+            const berat = parseFloat(parts[2].trim());
+            const validRFID = /^A\d{5,}$/.test(rfid);
+            const validPlat = /^[A-Z]{1,2} \d{1,4} [A-Z]{1,3}$/.test(plat);
+            const status =
+              validRFID && validPlat ? "✅ Diizinkan" : "❌ Ditolak";
+            tambahKeTabel(plat, rfid, berat, status);
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
